@@ -940,6 +940,11 @@ function filterFloor(floor, el) {
 }
 
 function toggleExpand(id) {
+  // Önce mevcut textarea değerlerini kaydet
+  document.querySelectorAll('.artwork-note').forEach(ta => {
+    const key = ta.dataset.key;
+    if (key) notes[key] = ta.value;
+  });
   expandedSet.has(id) ? expandedSet.delete(id) : expandedSet.add(id);
   render();
 }
@@ -959,6 +964,12 @@ function updateProgress() {
 }
 
 function render() {
+  // Önce DOM'daki mevcut textarea değerlerini kaydet (kayıp yaşanmasın)
+  document.querySelectorAll('.artwork-note').forEach(ta => {
+    const key = ta.dataset.key;
+    if (key && ta.value) notes[key] = ta.value;
+  });
+
   const filtered = activeFloor === 'all' ? stops : stops.filter(s => s.floor === activeFloor);
   const c = document.getElementById('stops-container');
   c.innerHTML = '';
@@ -986,7 +997,7 @@ function render() {
         </div>
         <div class="artwork-note-wrap">
           <div class="artwork-note-label">Notlarım</div>
-          <textarea class="artwork-note" data-key="${noteKey}" placeholder="Bu eser hakkında izlenimlerinizi, sorularınızı ya da gözlemlerinizi buraya yazın…" oninput="notes['${noteKey}']=this.value; persistAll()">${escHtml(savedNote)}</textarea>
+          <textarea class="artwork-note" data-key="${noteKey}" placeholder="Bu eser hakkında izlenimlerinizi, sorularınızı ya da gözlemlerinizi buraya yazın…">${escHtml(savedNote)}</textarea>
         </div>
       </div>
     `}).join('');
@@ -1021,6 +1032,14 @@ function render() {
       ${i < filtered.length - 1 && activeFloor === 'all' ? '<div class="connector-line"></div>' : ''}
     `;
     c.insertAdjacentHTML('beforeend', html);
+  });
+
+  // Render sonrası: textarea'lara oninput ekle (inline oninput kaldırıldı - daha güvenli)
+  document.querySelectorAll('.artwork-note').forEach(ta => {
+    ta.addEventListener('input', function() {
+      notes[this.dataset.key] = this.value;
+      persistAll();
+    });
   });
 }
 
